@@ -1,30 +1,41 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Scroll } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Scroll } from 'lucide-react';
 
 const RomanCalendar = () => {
-  // Imposta la data iniziale (2026 per default come richiesto, ma il mese corrente è dinamico)
+  // Inizializziamo con la data corrente (lato server potrebbe differire, ma lo correggiamo con l'useEffect)
   const [currentDate, setCurrentDate] = useState(new Date());
   
-  // Assicuriamo che l'anno sia bloccato al 2026 se l'utente naviga troppo lontano, 
-  // oppure lasciamo libero. La richiesta specifica il 2026 (2779 AUC).
-  // Qui inizializziamo al 2026 se siamo in un anno diverso, altrimenti usiamo il mese corrente.
+  // 'today' serve per evidenziare il giorno corrente basandosi ESCLUSIVAMENTE sul client
+  const [today, setToday] = useState(null);
+
   useEffect(() => {
+    // Appena il componente viene montato nel browser, catturiamo l'ora esatta del client
     const now = new Date();
-    if (now.getFullYear() !== 2026) {
-        // Se non siamo nel 2026 reale, forziamo l'inizio al 1 Gennaio 2026
-        // Tuttavia, il prompt dice "carichi automaticamente la pagina relativa al mese corrente".
-        // Assumeremo che l'utente voglia vedere il mese corrente dell'anno 2026.
-        const currentMonth = now.getMonth();
-        setCurrentDate(new Date(2026, currentMonth, 1));
-    }
+    setToday(now);
+    
+    // Aggiorniamo anche currentDate per assicurarci che il calendario parta dal mese/anno locale del client
+    // Questo corregge eventuali discrepanze se il server (USA) è nel giorno/anno precedente
+    setCurrentDate(now);
   }, []);
 
-  const AUC_YEAR = 2779; // 2026 AD + 753
-  const GREGORIAN_YEAR = 2026;
+  // Helper Numeri Romani (spostato su per poterlo usare nelle variabili calcolate)
+  const toRoman = (num) => {
+    const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+    let roman = '', i;
+    for ( i in lookup ) {
+      while ( num >= lookup[i] ) {
+        roman += i;
+        num -= lookup[i];
+      }
+    }
+    return roman;
+  };
 
-  // Dati in Latino
+  // Calcoli Dinamici per l'Anno
+  const currentYear = currentDate.getFullYear();
+  const aucYear = currentYear + 753; // Ab Urbe Condita (Anno corrente + 753)
+
   const monthsLat = [
     "Ianuarius", "Februarius", "Martius", "Aprilis", "Maius", "Iunius",
     "Iulius", "Augustus", "September", "October", "November", "December"
@@ -40,7 +51,6 @@ const RomanCalendar = () => {
     "Dies Saturni"   // Sabato
   ];
 
-  // Principali Festività Romane (Mese 0-indexed, Giorno 1-indexed)
   const festivals = {
     "0-1": "Kalendae Ianuariae",
     "0-9": "Agonalia",
@@ -81,19 +91,13 @@ const RomanCalendar = () => {
     "11-25": "Dies Natalis Solis Invicti"
   };
 
-  // Logica per le date Romane (Kalends, Nones, Ides)
   const getRomanDate = (day, month, year) => {
-    // Mesi con Nones al 7 e Ides al 15: Marzo (2), Maggio (4), Luglio (6), Ottobre (9)
-    // Nota: month è 0-indexed
     const isLateMonth = [2, 4, 6, 9].includes(month);
     const nonesDate = isLateMonth ? 7 : 5;
     const idesDate = isLateMonth ? 15 : 13;
     
-    // Giorni nel mese corrente (per calcolare le Calende del mese successivo)
     const daysInCurrentMonth = new Date(year, month + 1, 0).getDate();
 
-    // Mapping nomi mesi per l'accusativo (usato in "ad Kalendas Ianuarias")
-    // Semplifichiamo usando l'abbreviazione o il nome base per leggibilità UI
     const nextMonthIndex = (month + 1) % 12;
     const nextMonthName = monthsLat[nextMonthIndex].substring(0, 3) + ".";
     const currMonthName = monthsLat[month].substring(0, 3) + ".";
@@ -101,7 +105,7 @@ const RomanCalendar = () => {
     if (day === 1) return `Kal. ${currMonthName}`;
     
     if (day < nonesDate) {
-      const diff = nonesDate - day + 1; // +1 per conteggio inclusivo
+      const diff = nonesDate - day + 1;
       return diff === 2 ? `Prid. Non. ${currMonthName}` : `a.d. ${toRoman(diff)} Non. ${currMonthName}`;
     }
     
@@ -114,25 +118,10 @@ const RomanCalendar = () => {
 
     if (day === idesDate) return `Id. ${currMonthName}`;
 
-    // Dopo le Idi, si conta verso le Calende del mese successivo
-    const diff = daysInCurrentMonth - day + 2; // +1 fine mese, +1 inclusivo
+    const diff = daysInCurrentMonth - day + 2; 
     return diff === 2 ? `Prid. Kal. ${nextMonthName}` : `a.d. ${toRoman(diff)} Kal. ${nextMonthName}`;
   };
 
-  // Helper Numeri Romani
-  const toRoman = (num) => {
-    const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
-    let roman = '', i;
-    for ( i in lookup ) {
-      while ( num >= lookup[i] ) {
-        roman += i;
-        num -= lookup[i];
-      }
-    }
-    return roman;
-  };
-
-  // Gestione Navigazione
   const prevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
@@ -143,24 +132,20 @@ const RomanCalendar = () => {
 
   const handleMonthSelect = (e) => {
     const newMonth = parseInt(e.target.value);
-    setCurrentDate(new Date(GREGORIAN_YEAR, newMonth, 1));
+    // Mantiene l'anno corrente visualizzato, cambia solo il mese
+    setCurrentDate(new Date(currentDate.getFullYear(), newMonth, 1));
   };
 
-  // Generazione Griglia
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(); // 0 = Sun
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   
-  // Array per celle vuote prima del primo giorno
   const emptyDays = Array(firstDayOfMonth).fill(null);
-  
-  // Array dei giorni effettivi
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   return (
     <div className="min-h-screen bg-stone-100 py-8 px-4 font-serif text-stone-900 flex justify-center">
       <div className="w-full max-w-5xl bg-[#fdfbf7] shadow-2xl rounded-sm border-8 border-double border-stone-800 relative overflow-hidden">
         
-        {/* Decorazioni CSS per effetto 'antico' */}
         <div className="absolute top-0 left-0 w-full h-2 bg-stone-800/10"></div>
         <div className="absolute bottom-0 left-0 w-full h-2 bg-stone-800/10"></div>
 
@@ -171,8 +156,9 @@ const RomanCalendar = () => {
             <div className="flex items-center space-x-2 order-2 md:order-1">
                <span className="text-amber-200/60 text-sm font-sans tracking-widest uppercase">Anno</span>
                <div className="flex flex-col items-start">
-                  <span className="text-2xl font-bold tracking-widest">MMXXVI</span>
-                  <span className="text-xs text-amber-200">2026 AD</span>
+                  {/* Anno Gregoriano Dinamico */}
+                  <span className="text-2xl font-bold tracking-widest">{toRoman(currentYear)}</span>
+                  <span className="text-xs text-amber-200">{currentYear} AD</span>
                </div>
             </div>
 
@@ -181,19 +167,19 @@ const RomanCalendar = () => {
                 {monthsLat[currentDate.getMonth()]}
               </h1>
               <span className="text-amber-200 uppercase tracking-widest text-sm font-semibold">
-                Anno MMDCCLXXIX ab Urbe Condita
+                Anno {toRoman(aucYear)} ab Urbe Condita
               </span>
             </div>
 
             <div className="flex items-center space-x-2 order-3">
               <div className="flex flex-col items-end">
-                  <span className="text-2xl font-bold tracking-widest">MMDCCLXXIX</span>
-                  <span className="text-xs text-amber-200">2779 AUC</span>
+                  {/* Anno AUC Dinamico */}
+                  <span className="text-2xl font-bold tracking-widest">{toRoman(aucYear)}</span>
+                  <span className="text-xs text-amber-200">{aucYear} AUC</span>
                </div>
             </div>
           </div>
 
-          {/* Controlli Navigazione */}
           <div className="flex justify-center items-center space-x-4 mt-6">
             <button 
               onClick={prevMonth}
@@ -230,7 +216,6 @@ const RomanCalendar = () => {
 
         {/* Griglia Calendario */}
         <main className="p-4 md:p-8">
-          {/* Intestazione Giorni */}
           <div className="grid grid-cols-7 mb-4 border-b-4 border-stone-800">
             {weekDaysLat.map((day, idx) => (
               <div key={idx} className="p-2 text-center font-bold text-stone-700 uppercase tracking-tighter text-xs md:text-sm lg:text-base">
@@ -240,7 +225,6 @@ const RomanCalendar = () => {
             ))}
           </div>
 
-          {/* Giorni */}
           <div className="grid grid-cols-7 gap-1 md:gap-2 auto-rows-fr">
             {emptyDays.map((_, idx) => (
               <div key={`empty-${idx}`} className="bg-transparent p-2"></div>
@@ -249,10 +233,13 @@ const RomanCalendar = () => {
             {days.map((day) => {
               const festivalKey = `${currentDate.getMonth()}-${day}`;
               const festivalName = festivals[festivalKey];
+              
+              // Verifica se è oggi usando lo stato 'today' del client
               const isToday = 
-                new Date().getDate() === day && 
-                new Date().getMonth() === currentDate.getMonth() && 
-                new Date().getFullYear() === currentDate.getFullYear();
+                today &&
+                today.getDate() === day && 
+                today.getMonth() === currentDate.getMonth() && 
+                today.getFullYear() === currentDate.getFullYear();
 
               return (
                 <div 
@@ -262,7 +249,6 @@ const RomanCalendar = () => {
                     ${isToday ? 'bg-amber-100 ring-2 ring-red-800/50' : 'bg-white'}
                   `}
                 >
-                  {/* Numero Moderno */}
                   <div className="flex justify-between items-start">
                     <span className={`text-xl font-bold font-sans ${day === 1 ? 'text-4xl text-red-800' : 'text-stone-400'}`}>
                       {toRoman(day)}
@@ -270,14 +256,12 @@ const RomanCalendar = () => {
                     <span className="text-xs text-stone-300 font-sans">{day}</span>
                   </div>
 
-                  {/* Data Romana (Calende/None/Idi) */}
                   <div className="text-center my-1">
                     <span className="text-[0.65rem] md:text-xs text-stone-600 font-semibold italic uppercase block leading-tight">
                       {getRomanDate(day, currentDate.getMonth(), currentDate.getFullYear())}
                     </span>
                   </div>
 
-                  {/* Festività */}
                   {festivalName && (
                     <div className="mt-1 text-center bg-red-50 p-1 rounded border-l-2 border-red-700">
                       <span className="text-[0.6rem] md:text-xs font-bold text-red-800 uppercase block leading-tight break-words">
@@ -286,9 +270,8 @@ const RomanCalendar = () => {
                     </div>
                   )}
 
-                  {/* Marker Nundinae (ipotesi estetica) */}
                   {(day % 8 === 0) && (
-                     <div className="absolute bottom-1 right-1 w-1 h-1 bg-stone-300 rounded-full" title="Nundinae (simulato)"></div>
+                      <div className="absolute bottom-1 right-1 w-1 h-1 bg-stone-300 rounded-full" title="Nundinae (simulato)"></div>
                   )}
                 </div>
               );
@@ -296,10 +279,9 @@ const RomanCalendar = () => {
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="bg-stone-200 text-stone-600 p-4 text-center text-xs border-t border-stone-300">
           <p>
-            Dies fasti et nefasti in calendario Iuliano anni MMXXVI (2779 AUC).
+            Dies fasti et nefasti in calendario Iuliano ({aucYear} AUC).
           </p>
           <p className="opacity-60 mt-1">
             * Nota: Computus dierum Gregorianus est, nomenclatura Romana.
