@@ -1,3 +1,5 @@
+import festivalsData from './festivals.json';
+
 export const toRoman = (num) => {
     const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
     let roman = '', i;
@@ -19,45 +21,7 @@ export const weekDaysLat = [
     "Dies Solis", "Dies Lunae", "Dies Martis", "Dies Mercurii", "Dies Iovis", "Dies Veneris", "Dies Saturni"
 ];
 
-export const festivals = {
-    "0-1": "Kalendae Ianuariae",
-    "0-9": "Agonalia",
-    "0-11": "Carmentalia",
-    "1-13": "Parentalia",
-    "1-15": "Lupercalia",
-    "1-23": "Terminalia",
-    "1-27": "Equirria",
-    "2-1": "Matronalia",
-    "2-14": "Equirria",
-    "2-15": "Idus Martiae",
-    "2-17": "Liberalia",
-    "2-19": "Quinquatrus",
-    "3-1": "Veneralia",
-    "3-12": "Cerialia",
-    "3-21": "Parilia (Roma Condita)",
-    "3-28": "Floralia",
-    "4-1": "Bona Dea",
-    "4-9": "Lemuria",
-    "4-15": "Mercuralia",
-    "5-9": "Vestalia",
-    "5-20": "Summanalia",
-    "6-5": "Poplifugia",
-    "6-7": "Nonae Caprotinae",
-    "6-23": "Neptunalia",
-    "7-10": "Opalia",
-    "7-13": "Vertumnalia",
-    "7-23": "Volcanalia",
-    "8-4": "Ludi Romani",
-    "8-13": "Epulum Iovis",
-    "9-11": "Meditrinalia",
-    "9-15": "Equus October",
-    "9-19": "Armilustrium",
-    "10-13": "Epulum Iovis",
-    "10-24": "Brumalia",
-    "11-5": "Faunalia",
-    "11-17": "Saturnalia",
-    "11-25": "Dies Natalis Solis Invicti"
-};
+export const festivals = festivalsData;
 
 export const getRomanDate = (day, month, year) => {
     const isLateMonth = [2, 4, 6, 9].includes(month);
