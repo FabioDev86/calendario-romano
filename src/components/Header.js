@@ -2,20 +2,33 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { toRoman, monthsLat } from '../lib/roman-utils';
 
-const Header = ({ currentDate, currentYear, aucYear, prevMonth, nextMonth, prevYear, nextYear, handleMonthSelect }) => {
+const Header = ({ currentDate, currentYear, aucYear, prevMonth, nextMonth, prevYear, nextYear, handleMonthSelect, handleYearSelect }) => {
+    const years = Array.from({ length: 2100 - 1900 + 1 }, (_, i) => 1900 + i);
     return (
         <header className="bg-red-900 text-amber-50 p-4 md:p-6 text-center relative shadow-md">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-2 md:gap-4">
                 <div className="flex items-center space-x-2 order-2 md:order-1">
                     <div className="flex items-center space-x-1">
-                        <button onClick={prevYear} className="p-1 hover:bg-red-800 rounded-full transition-colors border border-amber-500/30">
+                        <button onClick={prevYear} disabled={currentYear <= 1900} className={`p-1 rounded-full transition-colors border border-amber-500/30 ${currentYear <= 1900 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-800'}`}>
                             <ChevronLeft size={16} />
                         </button>
                         <div className="flex flex-col items-center min-w-[80px]">
                             <span className="text-lg md:text-2xl font-bold tracking-widest">{currentYear > 0 ? toRoman(currentYear) : 'N'}</span>
-                            <span className="text-[0.6rem] md:text-xs text-amber-200">{currentYear > 0 ? `${currentYear} AD` : `${Math.abs(currentYear - 1)} BC`}</span>
+                            <div className="relative">
+                                <select
+                                    value={currentYear}
+                                    onChange={handleYearSelect}
+                                    className="appearance-none bg-transparent hover:bg-red-800 text-[0.6rem] md:text-xs text-amber-200 font-sans cursor-pointer text-center px-1 py-0.5 rounded outline-none border-none shadow-none text-center-last"
+                                >
+                                    {years.map(year => (
+                                        <option key={year} value={year} className="bg-red-950 text-amber-50 text-sm">
+                                            {year} AD
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                        <button onClick={nextYear} className="p-1 hover:bg-red-800 rounded-full transition-colors border border-amber-500/30">
+                        <button onClick={nextYear} disabled={currentYear >= 2100} className={`p-1 rounded-full transition-colors border border-amber-500/30 ${currentYear >= 2100 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-800'}`}>
                             <ChevronRight size={16} />
                         </button>
                     </div>

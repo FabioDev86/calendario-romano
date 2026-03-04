@@ -20,9 +20,10 @@ const RomanCalendar = () => {
 
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  const prevYear = () => setCurrentDate(new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1));
-  const nextYear = () => setCurrentDate(new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), 1));
+  const prevYear = () => setCurrentDate(new Date(Math.max(1900, currentDate.getFullYear() - 1), currentDate.getMonth(), 1));
+  const nextYear = () => setCurrentDate(new Date(Math.min(2100, currentDate.getFullYear() + 1), currentDate.getMonth(), 1));
   const handleMonthSelect = (e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1));
+  const handleYearSelect = (e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1));
 
   return (
     <div className="min-h-screen bg-stone-100 py-4 md:py-8 px-2 md:px-4 font-serif text-stone-900 flex justify-center">
@@ -37,6 +38,7 @@ const RomanCalendar = () => {
           prevYear={prevYear}
           nextYear={nextYear}
           handleMonthSelect={handleMonthSelect}
+          handleYearSelect={handleYearSelect}
         />
 
         <CalendarGrid
